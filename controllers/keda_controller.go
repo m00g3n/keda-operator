@@ -55,7 +55,7 @@ type KedaReconciler struct {
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;clusterroles;rolebindings,verbs=create;delete;update
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=create;delete;update
 //+kubebuilder:rbac:groups="*",resources="*/scale",verbs="*"
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;delete;update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;delete;update;patch
 //+kubebuilder:rbac:groups=apps,resources=statefulsets;replicasets,verbs=list;watch
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs="*"
 //+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs="*"

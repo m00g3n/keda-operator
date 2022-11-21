@@ -70,6 +70,7 @@ rules:
   - create
   - delete
   - list
+  - patch
   - update
   - watch
 - apiGroups:
