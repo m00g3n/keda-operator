@@ -49,7 +49,7 @@ module-build:
 
 .PHONY: fix-template
 fix-template:
-	cat ${PROJECT_ROOT}/template.yaml \
+	@cat ${PROJECT_ROOT}/template.yaml \
 	| sed -e 's/remote/control-plane/g' \
 		-e 's/${REGISTRY_PORT}/5000/g'  \
 	      	-e 's/localhost/k3d-${REGISTRY_NAME}/g' \
@@ -83,3 +83,7 @@ run: create-k3d patch-coredns module-image module-build fix-template install-mod
 
 .PHONY: stop
 stop: delete-k3d
+
+.PHONY: verify
+verify:
+	kubectl 
