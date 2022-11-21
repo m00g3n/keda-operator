@@ -86,4 +86,5 @@ stop: delete-k3d
 
 .PHONY: verify
 verify:
-	kubectl 
+	@${PROJECT_ROOT}/hack/verify_kyma_status.sh
+

@@ -6,8 +6,16 @@ run-k3d-with-keda:
 busola-enable:
 	@make -C ./busola busola-enable
 
+.PHONY: verify
+verify:
+	@make -C ./keda verify
+
 .PHONY: run
 run: run-k3d-with-keda busola-enable
+
+.PHONY: test
+test: run verify
+	@echo '### keda operator opertational'
 
 .PHONY: stop
 stop:
