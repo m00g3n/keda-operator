@@ -1,8 +1,8 @@
+CLUSTER_NAME ?= kyma
 REGISTRY_PORT ?= 5001
-REGISTRY_NAME ?= kyma-registry.localhost
+REGISTRY_NAME ?= ${CLUSTER_NAME}-registry
 REGISTRY_CERT ?= registry.pem
 
-CLUSTER_NAME ?= keda-local-dev
 
 MANAGER_IMAGE_NAME ?= keda-manager-dev-local
 MANAGER_IMAGE_TAG ?= 0.0.1
@@ -13,25 +13,19 @@ TEMPLATE_PATH ?= ${PROJECT_ROOT}/template.yaml
 
 KYMA ?= ${PROJECT_ROOT}/bin/kyma-unstable
 
-.PHONY: create-k3d-registry
-create-k3d-registry:
-	k3d registry create ${REGISTRY_NAME} --port 0.0.0.0:${REGISTRY_PORT} --no-help
 
 .PHONY: delete-k3d-registry
 delete-k3d-registry:
 	-k3d registry delete ${REGISTRY_NAME}
 
-.PHONY: create-k3d-cluster
-create-k3d-cluster:
-	k3d cluster create ${CLUSTER_NAME} \
-	--registry-use=k3d-${REGISTRY_NAME}:${REGISTRY_PORT}
 
 .PHONY: delete-k3d-cluster
 delete-k3d-cluster:
 	-k3d cluster delete ${CLUSTER_NAME}
 
 .PHONY: create-k3d 
-create-k3d: create-k3d-registry create-k3d-cluster
+create-k3d: 
+	${KYMA} provision k3d --registry-port ${REGISTRY_PORT} --name ${CLUSTER_NAME}
 
 .PHONY: delete-k3d
 delete-k3d: delete-k3d-cluster delete-k3d-registry
@@ -44,7 +38,7 @@ module-image:
 .PHONY: module-build
 module-build:
 	@make -C ${PROJECT_ROOT} module-build \
-		IMG=k3d-${REGISTRY_NAME}:5000/${MANAGER_IMAGE_NAME}:${MANAGER_IMAGE_TAG} \
+		IMG=k3d-${REGISTRY_NAME}:5001/${MANAGER_IMAGE_NAME}:${MANAGER_IMAGE_TAG} \
 		MODULE_REGISTRY=localhost:${REGISTRY_PORT}/unsigned
 
 .PHONY: fix-template
@@ -52,7 +46,7 @@ fix-template:
 	@cat ${PROJECT_ROOT}/template.yaml \
 	| sed -e 's/remote/control-plane/g' \
 		-e 's/${REGISTRY_PORT}/5000/g'  \
-	      	-e 's/localhost/k3d-${REGISTRY_NAME}/g' \
+	      	-e 's/localhost/k3d-${REGISTRY_NAME}.localhost/g' \
 	> ${PROJECT_ROOT}/template-k3d.yaml
 
 .PHONY: enable-module
@@ -69,9 +63,6 @@ patch-mod-mgr-role:
 		module-manager-manager-role \
 		--patch-file=./k3d-patches/patch-k3d-module-manager-clusterrole.yaml
 
-.PHONY: patch-coredns
-patch-coredns:
-	kubectl patch -n kube-system cm coredns --patch-file ./k3d-patches/patch-k3d-coredns.yaml
 
 .PHONY: install-module
 install-module:
@@ -79,7 +70,7 @@ install-module:
 		--template=${PROJECT_ROOT}/template-k3d.yaml
 
 .PHONY: run
-run: create-k3d patch-coredns module-image module-build fix-template install-module patch-mod-mgr-role enable-module
+run: create-k3d module-image module-build fix-template install-module patch-mod-mgr-role enable-module
 
 .PHONY: stop
 stop: delete-k3d
