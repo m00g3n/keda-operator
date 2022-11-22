@@ -38,7 +38,7 @@ module-image:
 .PHONY: module-build
 module-build:
 	@make -C ${PROJECT_ROOT} module-build \
-		IMG=k3d-${REGISTRY_NAME}:5001/${MANAGER_IMAGE_NAME}:${MANAGER_IMAGE_TAG} \
+		IMG=k3d-${REGISTRY_NAME}:${REGISTRY_PORT}/${MANAGER_IMAGE_NAME}:${MANAGER_IMAGE_TAG} \
 		MODULE_REGISTRY=localhost:${REGISTRY_PORT}/unsigned
 
 .PHONY: fix-template
