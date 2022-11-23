@@ -1,8 +1,6 @@
 CLUSTER_NAME ?= kyma
 REGISTRY_PORT ?= 5001
 REGISTRY_NAME ?= ${CLUSTER_NAME}-registry
-REGISTRY_CERT ?= registry.pem
-
 
 MANAGER_IMAGE_NAME ?= keda-manager-dev-local
 MANAGER_IMAGE_TAG ?= 0.0.1
@@ -13,17 +11,15 @@ TEMPLATE_PATH ?= ${PROJECT_ROOT}/template.yaml
 
 KYMA ?= ${PROJECT_ROOT}/bin/kyma-unstable
 
-
 .PHONY: delete-k3d-registry
 delete-k3d-registry:
 	-k3d registry delete ${REGISTRY_NAME}
-
 
 .PHONY: delete-k3d-cluster
 delete-k3d-cluster:
 	-k3d cluster delete ${CLUSTER_NAME}
 
-.PHONY: create-k3d 
+.PHONY: create-k3d
 create-k3d: 
 	${KYMA} provision k3d --registry-port ${REGISTRY_PORT} --name ${CLUSTER_NAME}
 
@@ -41,11 +37,15 @@ module-build:
 		IMG=k3d-${REGISTRY_NAME}:${REGISTRY_PORT}/${MANAGER_IMAGE_NAME}:${MANAGER_IMAGE_TAG} \
 		MODULE_REGISTRY=localhost:${REGISTRY_PORT}/unsigned
 
+.PHONY: patch-coredns
+patch-coredns:
+	${PROJECT_ROOT}/hack/get_kyma_localhost_registry_name.sh k3d-${REGISTRY_NAME}
+
 .PHONY: fix-template
 fix-template:
 	@cat ${PROJECT_ROOT}/template.yaml \
 	| sed -e 's/remote/control-plane/g' \
-		-e 's/${REGISTRY_PORT}/5000/g'  \
+		-e 's/${REGISTRY_PORT}/5000/g' \
 	      	-e 's/localhost/k3d-${REGISTRY_NAME}.localhost/g' \
 	> ${PROJECT_ROOT}/template-k3d.yaml
 
@@ -63,14 +63,13 @@ patch-mod-mgr-role:
 		module-manager-manager-role \
 		--patch-file=./k3d-patches/patch-k3d-module-manager-clusterrole.yaml
 
-
 .PHONY: install-module
 install-module:
 	${KYMA} alpha deploy \
 		--template=${PROJECT_ROOT}/template-k3d.yaml
 
 .PHONY: run
-run: create-k3d module-image module-build fix-template install-module patch-mod-mgr-role enable-module
+run: create-k3d module-image patch-coredns module-build fix-template install-module patch-mod-mgr-role enable-module verify
 
 .PHONY: stop
 stop: delete-k3d
