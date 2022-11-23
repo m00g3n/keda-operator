@@ -11,6 +11,10 @@ TEMPLATE_PATH ?= ${PROJECT_ROOT}/template.yaml
 
 KYMA ?= ${PROJECT_ROOT}/bin/kyma-unstable
 
+.PHONY: kyma
+kyma:
+	@make -C ${PROJECT_ROOT} kyma
+
 .PHONY: delete-k3d-registry
 delete-k3d-registry:
 	-k3d registry delete ${REGISTRY_NAME}
@@ -69,7 +73,7 @@ install-module:
 		--template=${PROJECT_ROOT}/template-k3d.yaml
 
 .PHONY: run
-run: create-k3d module-image patch-coredns module-build fix-template install-module patch-mod-mgr-role enable-module verify
+run: kyma create-k3d module-image patch-coredns module-build fix-template install-module patch-mod-mgr-role enable-module verify
 
 .PHONY: stop
 stop: delete-k3d
